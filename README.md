@@ -1,11 +1,13 @@
 # mysql-events
-![CircleCI](https://circleci.com/gh/involves/mysql-events.svg)
-[![Code Climate](https://codeclimate.com/github/involves/mysql-events/badges/gpa.svg)](https://codeclimate.com/github/involves/mysql-events)
-[![Test Coverage](https://codeclimate.com/github/involves/mysql-events/badges/coverage.svg)](https://codeclimate.com/github/involves/mysql-events/coverage)
+![CircleCI](https://circleci.com/gh/involvestecnologia/mysql-events.svg)
+[![Code Climate](https://codeclimate.com/github/involvestecnologia/mysql-events/badges/gpa.svg)](https://codeclimate.com/github/involvestecnologia/mysql-events)
+[![Test Coverage](https://codeclimate.com/github/involvestecnologia/mysql-events/badges/coverage.svg)](https://codeclimate.com/github/involvestecnologia/mysql-events/coverage)
 
 A [node.js](https://nodejs.org) package that watches a MySQL database and runs callbacks on matched events.
 
 This package is based on the [original ZongJi](https://github.com/nevill/zongji) and the [original mysql-events](https://github.com/spencerlambert/mysql-events) modules. Please make sure that you meet the requirements described at [ZongJi](https://github.com/involves/zongji#installation), like MySQL binlog etc.
+
+Check [@kuroski](https://github.com/kuroski)'s [mysql-events-ui](https://github.com/kuroski/mysql-events-ui) for a `mysql-events` UI implementation.
 
 ## Install
 ```sh
@@ -37,7 +39,7 @@ const program = async () => {
     name: 'TEST',
     expression: '*',
     statement: MySQLEvents.STATEMENTS.ALL,
-    callback: (event) => { // You will receive the events here
+    onEvent: (event) => { // You will receive the events here
       console.log(event);
     },
   });
@@ -50,7 +52,7 @@ program()
   .then(() => console.log('Waiting for database vents...'))
   .catch(console.error);
 ```
-[Check the examples](https://github.com/involves/mysql-events/examples)
+[Check the examples](https://github.com/involvestecnologia/mysql-events/examples)
 
 ## Usage
   ### #constructor(connection, options)
@@ -82,7 +84,7 @@ program()
       startAtEnd: true,
     });
     ```
-    [See more about ZongJi options](https://github.com/involves/zongji#zongji-class)
+    [See more about ZongJi options](https://github.com/rodrigogs/zongji#zongji-class)
 
   ### #start()
   - start function ensures that MySQL is connected and ZongJi is running before resolving its promise
@@ -98,15 +100,27 @@ program()
       .then(() => console.log('I\'m stopped!'))
       .catch(err => console.error('Something bad happened', err));
     ```
-  ### #addTrigger({ name, expression, statement, callback })
-  - Adds a trigger for the given expression/statement and calls the callback function when the event happens
+  ### #pause()
+  - pause function pauses MySQL connection until `#resume()` is called, this it useful when you're receiving more data than you can handle at the time
+    ```javascript
+    myInstance.pause();
+    ```
+  ### #resume()
+  - resume function resumes a paused MySQL connection, so it starts to generate binlog events again
+    ```javascript
+    myInstance.resume();
+    ```
+  ### #addTrigger({ name, expression, statement, onEvent })
+  - Adds a trigger for the given expression/statement and calls the `onEvent` function when the event happens
     ```javascript
     instance.addTrigger({
       name: 'MY_TRIGGER',
       expression: 'MY_SCHEMA.MY_TABLE.MY_COLUMN',
       statement: MySQLEvents.STATEMENTS.INSERT,
-      callback: (event) => {
-        // Here you will get the events for the given expression/statement
+      onEvent: async (event) => {
+        // Here you will get the events for the given expression/statement.
+        // This could be an async function.
+        await doSomething(event);
       },
     });
     ```
@@ -169,12 +183,12 @@ program()
       ...
     });
     ```
-    [Allowed statements](https://github.com/involves/mysql-events/blob/master/lib/STATEMENTS.enum.js)
-  - The `callback` argument is a function where the trigger events should be threated
+    [Allowed statements](https://github.com/involvestecnologia/mysql-events/blob/master/lib/STATEMENTS.enum.js)
+  - The `onEvent` argument is a function where the trigger events should be threated
     ```javascript
     instance.addTrigger({
       ...
-      callback: (event) => {
+      onEvent: (event) => {
         console.log(event); // { type, schema, table, affectedRows: [], affectedColumns: [], timestamp, }
       },
       ...
@@ -195,9 +209,9 @@ program()
     instance.on(MySQLEvents.EVENTS.CONNECTION_ERROR, (err) => console.log('Connection error', err));
     instance.on(MySQLEvents.EVENTS.ZONGJI_ERROR, (err) => console.log('ZongJi error', err));
     ```
-  [Available events](https://github.com/involves/mysql-events/blob/master/lib/STATEMENTS.enum.js)
+  [Available events](https://github.com/involvestecnologia/mysql-events/blob/master/lib/STATEMENTS.enum.js)
 
-## Trigger event object
+## Tigger event object
 It has the following structure:
 ```javascript
 {
@@ -225,6 +239,7 @@ It has the following structure:
   ],
   timestamp: 1530645380029,
   nextPosition: 1343,
+  binlogName: 'bin.001',
 }
 ```
 

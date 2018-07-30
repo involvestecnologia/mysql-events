@@ -6,7 +6,7 @@ jobs:
       - image: circleci/mysql:5.5
         environment:
           MYSQL_ROOT_PASSWORD: 'root'
-          MYSQL_DATABASE: mysql-events
+        command: [--server-id=1, --log-bin=/var/lib/mysql/mysql-bin.log, --binlog-format=row]
 
     working_directory: ~/mysql-events
 

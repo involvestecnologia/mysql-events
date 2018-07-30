@@ -14,12 +14,14 @@ rules:
   strict: off
   max-len: off
   no-console: off
+  no-continue: off
 globals:
   process: on
   describe: on
   before: on
   after: on
   beforeEach: on
+  afterEach: on
   suite: on
   test: on
   it: on
